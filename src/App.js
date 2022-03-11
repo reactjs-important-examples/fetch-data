@@ -6,6 +6,7 @@ import './App.css';
 function App() {
   const[movies , setMovies] = useState([]);
   const[isLoading , setIsLoading] = useState(false);
+  const[error, setError] = useState(null);
 
   // ravesh aval
   // const fetchMoviesHandler = event =>{
@@ -27,20 +28,37 @@ function App() {
   //ravesh dovom
   async function fetchMoviesHandler() {
     setIsLoading(true);
-    const response = await fetch('https://swapi.dev/api/films/');
-    const data = await response.json();
+    setError(null);
 
-    const transformeMovies = data.results.map(result => {
-      return{
-        id: result.episode_id,
-        title: result.title,
-        openingText: result.opening_crawl,
-        releaseDate: result.release_date
-      }}
-    );
-    setMovies(transformeMovies);
+    try{
+      const response = await fetch('https://swapi.dev/api/films/');
+
+      if(!response.ok){
+        throw new Error('Somthing went wrong! ')
+      }
+
+      const data = await response.json();
+
+      const transformeMovies = data.results.map(result => {
+        return{
+          id: result.episode_id,
+          title: result.title,
+          openingText: result.opening_crawl,
+          releaseDate: result.release_date
+        }}
+      );
+      setMovies(transformeMovies);
+    }catch(error){
+      setError(error.message);
+    }
     setIsLoading(false);
   }
+
+  let content = <p>Found no movies.</p>
+  
+  if(movies.length > 0)  content = <MovieList movies={movies} /> ;
+  if(isLoading) content = <p>Loading ... </p>;
+  if(error) content = <p>{error}</p>;
 
   return (
     <>
@@ -48,9 +66,7 @@ function App() {
         <button onClick={fetchMoviesHandler}>Fetch Movies</button>
       </section>
       <section>
-        {isLoading && <p>Loading ... </p>}
-        {!isLoading && movies.length === 0 && <p>Found no Movies! </p>}
-        {!isLoading && movies.length !==0 && <MovieList movies={movies} />}
+       {content}
       </section>
     </>
   );
